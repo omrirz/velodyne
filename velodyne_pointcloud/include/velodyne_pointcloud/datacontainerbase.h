@@ -67,7 +67,7 @@ public:
     }
     va_end(vl);
     cloud.point_step = offset;
-    cloud.row_step = init_width * cloud.point_step;
+    cloud.row_step = cloud.width * cloud.point_step;
     if (config_.transform && !tf_ptr)
     {
       tf_ptr = boost::shared_ptr<tf::TransformListener>(new tf::TransformListener);
@@ -113,6 +113,13 @@ public:
     cloud.width = config_.init_width;
     cloud.height = config_.init_height;
     cloud.is_dense = static_cast<uint8_t>(config_.is_dense);
+    if (config_.transform)
+    {
+      if (!computeTransformation(scan_msg->header.stamp))
+      {
+        ROS_ERROR_STREAM("Could not transform points!");
+      }
+    }
   }
 
   virtual void addPoint(float x, float y, float z, const uint16_t ring, const uint16_t azimuth, const float distance,
@@ -122,12 +129,7 @@ public:
   const sensor_msgs::PointCloud2& finishCloud()
   {
     cloud.data.resize(cloud.point_step * cloud.width * cloud.height);
-
-    if (!config_.target_frame.empty())
-    {
-      cloud.header.frame_id = config_.target_frame;
-    }
-
+    cloud.header.frame_id = config_.target_frame;
     ROS_DEBUG_STREAM("Prepared cloud width" << cloud.height * cloud.width
                                             << " Velodyne points, time: " << cloud.header.stamp);
     return cloud;
@@ -150,6 +152,7 @@ public:
 
   sensor_msgs::PointCloud2 cloud;
 
+protected:
   inline void vectorTfToEigen(tf::Vector3& tf_vec, Eigen::Vector3f& eigen_vec)
   {
     eigen_vec(0) = tf_vec[0];
@@ -198,7 +201,6 @@ public:
     return (range >= config_.min_range && range <= config_.max_range);
   }
 
-protected:
   Config config_;
   boost::shared_ptr<tf::TransformListener> tf_ptr;  ///< transform listener
   Eigen::Affine3f transformation;

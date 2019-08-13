@@ -36,6 +36,32 @@ namespace velodyne_pointcloud
         ROS_ERROR_STREAM("Could not load calibration file!");
     }
 
+    // std::vector< std::string > v;
+    // private_nh.getParamNames(v);
+    // for(std::vector<std::string>::size_type i = 0; i != v.size(); i++) {
+    // /* std::cout << v[i]; ... */
+    //     ROS_INFO_STREAM(v[i]);
+    // }
+
+    // std::string s;
+    // private_nh.param("frame_id", s, std::string("stupid_1"));
+    // ROS_INFO_STREAM(s);
+    // std::string t;
+    // private_nh.param("/superframe_nodelet_manager_driver/frame_id", t, std::string("stupid_2"));
+    // ROS_INFO_STREAM(t);
+    // std::string r;
+    // private_nh.param("frame_id", r, std::string("stupid_3"));
+    // ROS_INFO_STREAM(r);
+
+    // use private node handle to get parameters
+    private_nh.param("frame_id", config_.target_frame, std::string("velodyne"));
+    std::string tf_prefix = tf::getPrefixParam(private_nh);
+    ROS_DEBUG_STREAM("tf_prefix: " << tf_prefix);
+    config_.target_frame = tf::resolve(tf_prefix, config_.target_frame);
+
+    config_.fixed_frame = config_.target_frame;
+    // config_.target_frame = config_.fixed_frame = "velodyne";
+
     if(config_.organize_cloud)
     {
       container_ptr_ = boost::shared_ptr<OrganizedCloudXYZIR>(
@@ -54,7 +80,7 @@ namespace velodyne_pointcloud
 
     // advertise output point cloud (before subscribing to input data)
     output_ =
-      node.advertise<sensor_msgs::PointCloud2>("velodyne_points", 10);
+      node.advertise<sensor_msgs::PointCloud2>(config_.target_frame, 10);
 
     srv_ = boost::make_shared <dynamic_reconfigure::Server<velodyne_pointcloud::
       CloudNodeConfig> > (private_nh);
@@ -89,8 +115,6 @@ namespace velodyne_pointcloud
     ROS_INFO("Reconfigure Request");
     data_->setParameters(config.min_range, config.max_range, config.view_direction,
                          config.view_width);
-    config_.fixed_frame = config.fixed_frame;
-    config_.target_frame = config.target_frame;
     config_.min_range = config.min_range;
     config_.max_range = config.max_range;
 
