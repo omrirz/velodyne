@@ -63,6 +63,9 @@ class Convert
     void callback(velodyne_pointcloud::CloudNodeConfig &config, uint32_t level);
     void processScan(const velodyne_msgs::VelodyneScan::ConstPtr &scanMsg);
 
+    ros::Time last_log_time = ros::Time::now();
+    double messages_published_since_last_log = 0;
+
     boost::shared_ptr<dynamic_reconfigure::Server<velodyne_pointcloud::CloudNodeConfig> > srv_;
 
     boost::shared_ptr<velodyne_rawdata::RawData> data_;

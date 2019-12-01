@@ -162,6 +162,20 @@ namespace velodyne_pointcloud
     diag_topic_->tick(scanMsg->header.stamp);
     diagnostics_.update();
     output_.publish(container_ptr_->finishCloud());
+
+    messages_published_since_last_log++;
+    ros::Time current_log_time = ros::Time::now();
+    ros::Duration diff = current_log_time - last_log_time;
+    double diff_sec = diff.toSec();
+    if (diff_sec > 5) {
+      std::ostringstream oss;
+      oss << "[ " << config_.target_frame << "_publisher ]" << " [ fps:  " << std::fixed << std::setprecision(2) << messages_published_since_last_log/diff_sec << " ]";
+      std::string sdt_str = oss.str();
+      const char* log_msg = sdt_str.c_str();
+      ROS_INFO("%s", log_msg);
+      last_log_time = current_log_time;
+      messages_published_since_last_log = 0;
+    }
   }
 
 } // namespace velodyne_pointcloud
