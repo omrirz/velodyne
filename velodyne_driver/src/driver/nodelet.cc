@@ -96,7 +96,7 @@ void DriverNodelet::devicePoll()
   oss << "[ " << dvr_->get_frame_id() << "_publisher ]" << " failed to poll device";
   std::string sdt_str = oss.str();
   const char* msg = sdt_str.c_str();
-
+  
   while(ros::ok())
     {
       // poll device until end of file
